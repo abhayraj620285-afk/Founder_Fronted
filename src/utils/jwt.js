@@ -1,7 +1,13 @@
 /**
- * jwt.js — JWT decoder that handles every known Spring Security format
- * and dumps the full payload to console so you can see exactly what
- * field your backend uses.
+ * jwt.js
+ *
+ * Your Spring Boot JwtService.generateToken() now adds:
+ *   .claim("role", role)
+ *
+ * So the JWT payload looks like:
+ *   { "sub": "founder@gmail.com", "role": "FOUNDER", "iat": ..., "exp": ... }
+ *
+ * extractRole() reads payload.role directly.
  */
 
 export function decodeToken(token) {
@@ -22,49 +28,38 @@ function strip(str) {
   return str.replace(/^ROLE_/i, "").toUpperCase().trim();
 }
 
-const KNOWN = ["ADMIN", "FOUNDER", "USER"];
+const KNOWN_ROLES = ["ADMIN", "FOUNDER", "USER"];
 
 export function extractRole(token) {
   const p = decodeToken(token);
   if (!p) return null;
 
-  // Try every known field name Spring Boot uses
-  const candidates = [
-    p.role,
-    p.Role,
-    p.ROLE,
-    p.scope,
-    ...(Array.isArray(p.roles)       ? p.roles       : []),
-    ...(Array.isArray(p.authorities) ? p.authorities : []),
-    ...(Array.isArray(p.Authorities) ? p.Authorities : []),
-    ...(Array.isArray(p.permissions) ? p.permissions : []),
-  ];
-
-  for (const c of candidates) {
-    if (!c) continue;
-    // Handle { authority: "ROLE_FOUNDER" } objects
-    const str = typeof c === "string" ? c : c?.authority ?? c?.name ?? "";
-    const n   = strip(str);
-    if (n && KNOWN.includes(n)) return n;
+  // Primary: your backend uses .claim("role", role)
+  if (typeof p.role === "string") {
+    const r = strip(p.role);
+    if (r) return r;
   }
 
-  // Last resort: scan ALL values in the payload for a known role string
+  // Fallbacks for any future changes
+  if (Array.isArray(p.roles) && p.roles.length > 0) {
+    const v = p.roles[0];
+    const r = strip(typeof v === "string" ? v : v?.authority ?? "");
+    if (r) return r;
+  }
+
+  if (Array.isArray(p.authorities) && p.authorities.length > 0) {
+    const v = p.authorities[0];
+    const r = strip(typeof v === "string" ? v : v?.authority ?? "");
+    if (r) return r;
+  }
+
+  // Brute-force scan all values
   for (const [key, val] of Object.entries(p)) {
     if (typeof val === "string") {
-      const n = strip(val);
-      if (n && KNOWN.includes(n)) {
-        console.log(`📍 extractRole: found role "${n}" in payload field "${key}"`);
-        return n;
-      }
-    }
-    if (Array.isArray(val)) {
-      for (const item of val) {
-        const str = typeof item === "string" ? item : item?.authority ?? item?.name ?? "";
-        const n   = strip(str);
-        if (n && KNOWN.includes(n)) {
-          console.log(`📍 extractRole: found role "${n}" in array field "${key}"`);
-          return n;
-        }
+      const r = strip(val);
+      if (r && KNOWN_ROLES.includes(r)) {
+        console.log(`extractRole: found "${r}" in field "${key}"`);
+        return r;
       }
     }
   }
@@ -74,7 +69,7 @@ export function extractRole(token) {
 
 export function extractEmail(token) {
   const p = decodeToken(token);
-  return p?.sub ?? p?.email ?? p?.username ?? p?.user ?? null;
+  return p?.sub ?? p?.email ?? p?.username ?? null;
 }
 
 export function isTokenExpired(token) {
@@ -84,21 +79,22 @@ export function isTokenExpired(token) {
 }
 
 export function tokenSummary(token) {
-  const payload = decodeToken(token);
-  if (!payload) return null;
+  const p = decodeToken(token);
+  if (!p) return null;
   return {
     email:   extractEmail(token),
     role:    extractRole(token),
     expired: isTokenExpired(token),
-    exp:     payload.exp ? new Date(payload.exp * 1000).toLocaleString() : "none",
+    exp:     p.exp ? new Date(p.exp * 1000).toLocaleString() : "none",
   };
 }
 
 export function debugToken(token) {
-  const payload = decodeToken(token);
-  console.group("🔍 FounderBrain — JWT Payload (copy this if role is null)");
-  console.log(JSON.stringify(payload, null, 2));
-  console.log("extractRole →", extractRole(token));
+  const p = decodeToken(token);
+  console.group("🔍 JWT Payload");
+  console.log(JSON.stringify(p, null, 2));
+  console.log("role →", extractRole(token));
+  console.log("email →", extractEmail(token));
   console.groupEnd();
-  return payload;
+  return p;
 }

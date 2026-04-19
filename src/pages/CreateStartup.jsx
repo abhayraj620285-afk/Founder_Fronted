@@ -18,7 +18,7 @@ const FIELDS = [
 ];
 
 export default function CreateStartup() {
-  const { saveStartupId, addStartup } = useAuth();
+  const { addStartup, saveStartupId } = useAuth();
   const toast    = useToast();
   const navigate = useNavigate();
 
@@ -34,9 +34,8 @@ export default function CreateStartup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
-    if (!form.name)     { setError("Startup name is required.");        return; }
-    if (!form.industry) { setError("Please select an industry.");       return; }
+    if (!form.name)     { setError("Startup name is required.");  return; }
+    if (!form.industry) { setError("Please select an industry."); return; }
 
     setLoading(true);
     try {
@@ -50,27 +49,26 @@ export default function CreateStartup() {
         users:            parseInt(form.users)              || 0,
       };
 
-      const response = await createStartupApi(payload);
+      // createStartupApi returns the startup object directly (unwrapped from ApiResponse)
+      // Your backend: ApiResponse<StartupResponse> → data field contains the startup
+      const startup = await createStartupApi(payload);
+      console.log("Created startup:", startup);
 
-      // Extract the startup object — handle both wrapped and unwrapped responses
-      // { data: { id: 1, name: "..." } }  OR  { id: 1, name: "..." }
-      const startup   = response?.data ?? response;
       const startupId = startup?.id;
-
       if (startupId) {
-        // Save ID to context + localStorage
         saveStartupId(startupId);
         addStartup(startup);
-        toast.success(`"${form.name}" created! Loading your dashboard…`);
-        // Redirect to dashboard
+        toast.success(`"${form.name}" created! Loading dashboard…`);
         navigate("/dashboard", { replace: true });
       } else {
-        // Response didn't include an id — still go to dashboard
-        toast.success(`"${form.name}" created! Go to dashboard to see insights.`);
+        // Id not found in response — still navigate but warn
+        console.warn("No startup ID in response:", startup);
+        toast.success(`"${form.name}" created! Go to dashboard.`);
         navigate("/dashboard", { replace: true });
       }
 
     } catch (err) {
+      console.error("Create startup error:", err.message);
       setError(err.message || "Failed to create startup.");
       toast.error(err.message);
     } finally {
@@ -86,41 +84,32 @@ export default function CreateStartup() {
 
         {/* Header */}
         <div>
-          {/* Flow indicator */}
           <div className="flex items-center gap-1 text-[11px] mb-4">
-            {[
-              { label:"Register", done:true,  active:false },
-              { label:"Login",    done:true,  active:false },
-              { label:"Create Startup", done:false, active:true  },
-              { label:"Dashboard",done:false, active:false },
-            ].map(({ label, done, active }, i, arr) => (
+            {["Register","Login","Create Startup","Dashboard"].map((label, i, arr) => (
               <div key={label} className="flex items-center gap-1">
-                <span className={
-                  active ? "text-[#63ffb4] font-bold" :
-                  done   ? "text-white/50"             :
-                           "text-white/20"
-                }>{label}</span>
+                <span className={i === 2 ? "text-[#63ffb4] font-bold" : i < 2 ? "text-white/50" : "text-white/20"}>
+                  {label}
+                </span>
                 {i < arr.length - 1 && <span className="text-white/15">→</span>}
               </div>
             ))}
           </div>
 
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#63ffb4]/20 bg-[#63ffb4]/5 text-[#63ffb4] text-xs font-mono tracking-widest mb-3">
-            🚀 FOUNDER · STEP 1 OF 2
+            🚀 FOUNDER · NEW STARTUP
           </div>
           <h1 className="text-3xl font-black tracking-tight text-white">Register Your Startup</h1>
           <p className="text-sm text-white/40 mt-1">Fill in your startup details to unlock AI-powered analytics</p>
         </div>
 
-        {/* Form card */}
+        {/* Form */}
         <div className="rounded-2xl border border-white/10 bg-[#0d1117]/80 backdrop-blur-sm p-8 shadow-2xl">
 
-          {/* Error */}
           {error && (
             <div className="flex items-start gap-3 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400 mb-6">
-              <span className="shrink-0 mt-0.5">⚠</span>
-              <span>{error}</span>
-              <button onClick={() => setError("")} className="ml-auto shrink-0 text-red-400/40 hover:text-red-400 text-lg leading-none">×</button>
+              <span>⚠</span>
+              <span className="flex-1">{error}</span>
+              <button onClick={() => setError("")} className="text-red-400/40 hover:text-red-400 text-lg leading-none">×</button>
             </div>
           )}
 
@@ -131,8 +120,7 @@ export default function CreateStartup() {
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold tracking-widest uppercase text-white/40">Startup Name *</label>
                 <input
-                  value={form.name} onChange={set("name")}
-                  placeholder="Acme Corp"
+                  value={form.name} onChange={set("name")} placeholder="Acme Corp"
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#63ffb4]/50 focus:ring-1 focus:ring-[#63ffb4]/20 transition-all"
                 />
               </div>
@@ -151,7 +139,7 @@ export default function CreateStartup() {
             {/* Divider */}
             <div className="flex items-center gap-3">
               <div className="flex-1 h-px bg-white/[0.06]" />
-              <span className="text-xs text-white/25 tracking-widest font-semibold uppercase">Financial Metrics</span>
+              <span className="text-xs text-white/25 tracking-widest uppercase font-semibold">Financial Metrics</span>
               <div className="flex-1 h-px bg-white/[0.06]" />
             </div>
 
@@ -178,25 +166,27 @@ export default function CreateStartup() {
               <div>
                 <div className="text-[10px] text-white/25 uppercase tracking-widest font-semibold">After submitting</div>
                 <div className="text-xs text-white/50">
-                  You'll be redirected to your <span className="text-[#63ffb4] font-semibold">Dashboard</span> with real-time ML insights
+                  You'll be taken to your <span className="text-[#63ffb4] font-semibold">Dashboard</span> with real-time ML risk prediction and insights
                 </div>
               </div>
             </div>
 
             <button
               type="submit" disabled={loading}
-              className="w-full rounded-xl bg-[#63ffb4] text-[#080c10] font-bold text-sm py-4 tracking-wide hover:bg-[#4dffa8] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full rounded-xl bg-[#63ffb4] text-[#080c10] font-bold text-sm py-4 hover:bg-[#4dffa8] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? (
-                <><div className="w-4 h-4 border-2 border-[#080c10]/30 border-t-[#080c10] rounded-full animate-spin" />Analyzing with ML…</>
-              ) : "Create Startup & Go to Dashboard →"}
+              {loading
+                ? <><div className="w-4 h-4 border-2 border-[#080c10]/30 border-t-[#080c10] rounded-full animate-spin" />Analyzing with ML…</>
+                : "Create Startup & Go to Dashboard →"}
             </button>
           </form>
         </div>
 
-        <p className="text-center text-xs text-white/20">
-          Already created a startup?{" "}
-          <Link to="/dashboard" className="text-[#63ffb4] hover:text-white transition-colors font-semibold">Go to Dashboard</Link>
+        <p className="text-center text-xs text-white/25">
+          Already have a startup?{" "}
+          <Link to="/dashboard" className="text-[#63ffb4] hover:text-white transition-colors font-semibold">
+            Go to Dashboard
+          </Link>
         </p>
       </div>
     </div>

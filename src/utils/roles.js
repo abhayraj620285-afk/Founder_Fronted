@@ -4,14 +4,12 @@ export const ROLES = {
   USER:    "USER",
 };
 
-// Where each role goes immediately after login
 export const ROLE_HOME = {
   ADMIN:   "/admin",
-  FOUNDER: "/create",     // FOUNDER → create startup first
-  USER:    "/dashboard",
+  FOUNDER: "/create",    // overridden in Login.jsx if startups exist
+  USER:    "/explore",   // USER → explore page, NOT dashboard
 };
 
-// Feature flags
 export const ROLE_FEATURES = {
   ADMIN: {
     canViewDashboard:   true,
@@ -19,6 +17,8 @@ export const ROLE_FEATURES = {
     canCreateStartup:   false,
     canDeleteStartup:   true,
     canViewAdminPanel:  true,
+    canViewExplore:     false,
+    canViewDemoDashboard: false,
   },
   FOUNDER: {
     canViewDashboard:   true,
@@ -26,13 +26,17 @@ export const ROLE_FEATURES = {
     canCreateStartup:   true,
     canDeleteStartup:   false,
     canViewAdminPanel:  false,
+    canViewExplore:     false,
+    canViewDemoDashboard: false,
   },
   USER: {
-    canViewDashboard:   true,
+    canViewDashboard:   false,   // no real dashboard
     canViewBenchmark:   false,
     canCreateStartup:   false,
     canDeleteStartup:   false,
     canViewAdminPanel:  false,
+    canViewExplore:     true,
+    canViewDemoDashboard: true,
   },
 };
 
@@ -40,18 +44,18 @@ export function can(role, feature) {
   return ROLE_FEATURES[role]?.[feature] ?? false;
 }
 
-// Nav links shown per role
 export function getNavLinks(role) {
   const all = [
-    { to: "/create",    label: "New Startup",   icon: "✦", feature: "canCreateStartup"  },
-    { to: "/dashboard", label: "Dashboard",      icon: "◈", feature: "canViewDashboard"  },
-    { to: "/benchmark", label: "Benchmark",      icon: "⊞", feature: "canViewBenchmark"  },
-    { to: "/admin",     label: "Admin Controls", icon: "⚙", feature: "canViewAdminPanel" },
+    { to: "/explore",        label: "Explore",        icon: "◉", feature: "canViewExplore"      },
+    { to: "/demo-dashboard", label: "Demo Dashboard", icon: "◈", feature: "canViewDemoDashboard" },
+    { to: "/create",         label: "New Startup",    icon: "✦", feature: "canCreateStartup"     },
+    { to: "/dashboard",      label: "Dashboard",      icon: "◈", feature: "canViewDashboard"     },
+    { to: "/benchmark",      label: "Benchmark",      icon: "⊞", feature: "canViewBenchmark"     },
+    { to: "/admin",          label: "Admin Controls", icon: "⚙", feature: "canViewAdminPanel"    },
   ];
   return all.filter((l) => can(role, l.feature));
 }
 
-// Visual metadata per role
 export const ROLE_META = {
   ADMIN: {
     label: "Admin",   color: "#f87171",
@@ -64,9 +68,9 @@ export const ROLE_META = {
     desc: "Create and manage your startup analytics",  icon: "🚀",
   },
   USER: {
-    label: "User",    color: "#60a5fa",
+    label: "Explorer", color: "#60a5fa",
     bg: "rgba(96,165,250,0.10)",  border: "rgba(96,165,250,0.25)",
-    desc: "View-only access to dashboard",            icon: "👤",
+    desc: "Exploring the platform — upgrade to unlock full access", icon: "🌐",
   },
 };
 
