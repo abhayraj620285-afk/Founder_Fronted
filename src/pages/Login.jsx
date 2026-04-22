@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Logo from "../components/Logo";
 import { useNavigate, Link } from "react-router-dom";
 import { loginApi, getMyStartupsApi } from "../api/api";
 import { useAuth } from "../context/AuthContext";
@@ -27,27 +28,26 @@ export default function Login() {
 
     setLoading(true);
     try {
-      // 1. Read the role set during registration — this is 100% reliable
-      //    because we set it in Register.jsx BEFORE calling the API
-      const role = localStorage.getItem("fb_role") ?? "USER";
-      console.log("Login — role from registration:", role);
-
-      // 2. Call backend login
+      // Step 1 — call backend
       const data = await loginApi(email, password);
-      const accessToken  = data.accessToken  ?? data.token ?? data;
-      const refreshToken = data.refreshToken ?? null;
+      const accessToken  = data?.accessToken  ?? data?.token ?? data;
+      const refreshToken = data?.refreshToken ?? null;
 
-      // 3. Save token only — role is already correct
-      saveToken(accessToken, refreshToken);
+      // Step 2 — saveToken looks up role by THIS email specifically
+      // Returns the correct role for this account, ignoring other accounts
+      const role = saveToken(accessToken, refreshToken, email.trim().toLowerCase());
+
+      console.log(`Login success — email: ${email} | role: ${role}`);
 
       const meta = ROLE_META[role] ?? ROLE_META.USER;
       toast.success(`Welcome back! Signed in as ${meta.label} ${meta.icon}`);
 
-      // 4. Redirect based on role
+      // Step 3 — route by role
       if (role === "ADMIN") {
         navigate("/admin", { replace: true });
 
       } else if (role === "FOUNDER") {
+        // Check if this founder already has startups
         try {
           const startups = await getMyStartupsApi();
           if (startups?.length > 0) {
@@ -57,11 +57,13 @@ export default function Login() {
             navigate("/create", { replace: true });
           }
         } catch {
-          navigate("/create", { replace: true });
+          // If API fails, check if we have a saved startup ID
+          const saved = localStorage.getItem("fb_startup_id");
+          navigate(saved ? "/dashboard" : "/create", { replace: true });
         }
 
       } else {
-        // USER or anything else → explore
+        // USER or unknown → explore
         navigate("/explore", { replace: true });
       }
 
@@ -78,14 +80,8 @@ export default function Login() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[#63ffb4]/5 blur-[100px] pointer-events-none" />
 
       <div className="relative w-full max-w-sm space-y-6 animate-fadeIn">
-        <div className="text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#63ffb4]/20 bg-[#63ffb4]/5 text-[#63ffb4] text-xs font-mono tracking-widest mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#63ffb4] animate-pulse" />
-            AI-POWERED ANALYTICS
-          </div>
-          <h1 className="text-4xl font-black tracking-tight text-white">
-            Founder<span className="text-[#63ffb4]">Brain</span>
-          </h1>
+        <div className="flex flex-col items-center gap-3">
+          <Logo size="lg" />
           <p className="text-sm text-white/40 mt-1">Sign in to continue</p>
         </div>
 
@@ -120,24 +116,27 @@ export default function Login() {
             </button>
           </form>
 
+          {/* Smart redirect info */}
           <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 py-3 space-y-1.5">
-            <p className="text-[10px] text-white/25 font-semibold tracking-widest uppercase">After sign in</p>
+            <p className="text-[10px] text-white/25 font-semibold tracking-widest uppercase">Smart redirect after sign in</p>
             {[
-              { icon:"🚀", role:"Founder", dest:"Dashboard or Create Startup",  color:"#63ffb4" },
-              { icon:"⚙",  role:"Admin",   dest:"Admin Panel",                  color:"#f87171" },
-              { icon:"🌐", role:"User",    dest:"Explore + Demo Dashboard",     color:"#60a5fa" },
-            ].map(({ icon, role, dest, color }) => (
-              <div key={role} className="flex items-center gap-2 text-xs">
-                <span>{icon}</span>
-                <span className="font-semibold" style={{ color }}>{role}</span>
-                <span className="text-white/25">→ {dest}</span>
+              { icon:"🚀", role:"Founder", desc:"Dashboard (returning) or Create Startup (first time)", color:"#63ffb4" },
+              { icon:"⚙",  role:"Admin",   desc:"Admin Panel",                                          color:"#f87171" },
+              { icon:"🌐", role:"User",    desc:"Explore Page & Demo Dashboard",                        color:"#60a5fa" },
+            ].map(({ icon, role, desc, color }) => (
+              <div key={role} className="flex items-start gap-2 text-xs">
+                <span className="shrink-0 mt-0.5">{icon}</span>
+                <span className="font-semibold shrink-0" style={{ color }}>{role}</span>
+                <span className="text-white/25">→ {desc}</span>
               </div>
             ))}
           </div>
 
           <p className="text-center text-xs text-white/30">
             Don't have an account?{" "}
-            <Link to="/register" className="text-[#63ffb4] hover:text-white transition-colors font-semibold">Register here</Link>
+            <Link to="/register" className="text-[#63ffb4] hover:text-white transition-colors font-semibold">
+              Register here
+            </Link>
           </p>
         </div>
       </div>

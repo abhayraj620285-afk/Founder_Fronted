@@ -1,73 +1,129 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800;900&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   PROFESSIONAL FONT IMPORTS
+   • Instrument Serif  — editorial display (Notion, Framer marketing pages)
+   • Plus Jakarta Sans — clean UI sans-serif (Linear, Loom, Vercel)
+   • JetBrains Mono    — developer mono (GitHub, Linear, VS Code)
+───────────────────────────────────────────────────────────────────────────── */
+
 
 @layer base {
-  * { box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
   body {
-    background: #080c10;
-    color: #fff;
-    font-family: 'Inter', sans-serif;
-    -webkit-font-smoothing: antialiased;
+    background-color: #080c10;
+    color: #ffffff;
+    /* Plus Jakarta Sans — same family used by Linear, Loom, Vercel */
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing:  antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
-  h1, h2, h3 { font-family: 'Syne', sans-serif; }
+
+  /*
+   * Instrument Serif on hero h1 headings only — creates the editorial premium
+   * feel used by Notion, Framer, Stripe. Italic variant adds sophistication.
+   */
+  h1 {
+    font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+    font-weight: 400; /* Serif display doesn't need heavy weight */
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+  }
+
+  /* Plus Jakarta Sans for sub-headings — clean, geometric */
+  h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+  }
+
+  /* JetBrains Mono for all monospaced elements */
+  code, kbd, pre, samp,
+  .font-mono,
+  [class*="tracking-widest"][class*="uppercase"] {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+
   input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Smooth scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #080c10; }
+  ::-webkit-scrollbar-thumb { background: rgba(99,255,180,0.2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(99,255,180,0.4); }
 }
 
 @layer utilities {
-  /* ── Entrance animations ── */
-  .animate-fadeIn {
-    animation: fadeIn 0.5s ease both;
+  /* ── Font family helpers ── */
+  .font-display {
+    font-family: 'Instrument Serif', Georgia, serif !important;
+    font-weight: 400;
   }
-  .animate-fadeInUp {
-    animation: fadeInUp 0.6s cubic-bezier(.22,1,.36,1) both;
+  .font-display-bold {
+    font-family: 'Instrument Serif', Georgia, serif !important;
+    font-style: italic;
   }
-  .animate-slideIn {
-    animation: slideIn 0.25s cubic-bezier(.4,0,.2,1) both;
+  .font-ui {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important;
   }
-  .animate-dropDown {
-    animation: dropDown 0.18s cubic-bezier(.4,0,.2,1) both;
-  }
-  .animate-scaleIn {
-    animation: scaleIn 0.4s cubic-bezier(.22,1,.36,1) both;
-  }
-  .animate-glowPulse {
-    animation: glowPulse 3s ease-in-out infinite;
-  }
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-  .animate-shimmer {
-    animation: shimmer 2.5s linear infinite;
-    background: linear-gradient(90deg, transparent 0%, rgba(99,255,180,0.08) 50%, transparent 100%);
-    background-size: 200% 100%;
-  }
-  .animate-countUp {
-    animation: fadeInUp 1s cubic-bezier(.22,1,.36,1) both;
-  }
-  .animate-borderGlow {
-    animation: borderGlow 3s ease-in-out infinite;
+  .font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
   }
 
-  /* Stagger delays */
-  .delay-100 { animation-delay: 0.1s; }
-  .delay-200 { animation-delay: 0.2s; }
-  .delay-300 { animation-delay: 0.3s; }
-  .delay-400 { animation-delay: 0.4s; }
-  .delay-500 { animation-delay: 0.5s; }
-  .delay-600 { animation-delay: 0.6s; }
-  .delay-700 { animation-delay: 0.7s; }
-  .delay-800 { animation-delay: 0.8s; }
+  /* ── Text gradient helpers ── */
+  .text-gradient-brand {
+    background: linear-gradient(135deg, #63ffb4 0%, #60a5fa 55%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-gradient-blue {
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
+  /* ── Animations ── */
+  .animate-fadeIn    { animation: fadeIn    0.5s  ease                        both; }
+  .animate-fadeInUp  { animation: fadeInUp  0.65s cubic-bezier(.22,1,.36,1)   both; }
+  .animate-slideIn   { animation: slideIn   0.25s cubic-bezier(.4,0,.2,1)     both; }
+  .animate-dropDown  { animation: dropDown  0.2s  cubic-bezier(.4,0,.2,1)     both; }
+  .animate-scaleIn   { animation: scaleIn   0.4s  cubic-bezier(.22,1,.36,1)   both; }
+  .animate-glowPulse { animation: glowPulse 4s    ease-in-out          infinite; }
+  .animate-float     { animation: float     7s    ease-in-out          infinite; }
+  .animate-shimmer   { animation: shimmer   2.5s  linear               infinite; background: linear-gradient(90deg,transparent 0%,rgba(99,255,180,0.08) 50%,transparent 100%); background-size: 200% 100%; }
+  .animate-borderGlow{ animation: borderGlow 3s   ease-in-out          infinite; }
+  .animate-spin-slow { animation: spin       8s   linear               infinite; }
+
+  /* ── Stagger helpers ── */
+  .delay-100 { animation-delay: 0.10s; }
+  .delay-200 { animation-delay: 0.20s; }
+  .delay-300 { animation-delay: 0.30s; }
+  .delay-400 { animation-delay: 0.40s; }
+  .delay-500 { animation-delay: 0.50s; }
+  .delay-600 { animation-delay: 0.60s; }
+  .delay-700 { animation-delay: 0.70s; }
+  .delay-800 { animation-delay: 0.80s; }
+
+  /* ── Keyframes ── */
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
   }
   @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(24px); }
+    from { opacity: 0; transform: translateY(26px); }
     to   { opacity: 1; transform: translateY(0); }
   }
   @keyframes slideIn {
@@ -76,26 +132,27 @@
   }
   @keyframes dropDown {
     from { opacity: 0; transform: translateY(-6px) scale(0.97); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
   }
   @keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.92); }
+    from { opacity: 0; transform: scale(0.93); }
     to   { opacity: 1; transform: scale(1); }
   }
   @keyframes glowPulse {
-    0%, 100% { opacity: 0.4; }
-    50%       { opacity: 0.8; }
+    0%, 100% { opacity: 0.35; }
+    50%       { opacity: 0.78; }
   }
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50%       { transform: translateY(-10px); }
+    0%,  100% { transform: translateY(0px)   rotate(0deg);    }
+    33%        { transform: translateY(-10px) rotate( 0.5deg); }
+    66%        { transform: translateY(-5px)  rotate(-0.5deg); }
   }
   @keyframes shimmer {
-    from { background-position: 200% 0; }
+    from { background-position:  200% 0; }
     to   { background-position: -200% 0; }
   }
   @keyframes borderGlow {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(99,255,180,0); }
+    0%, 100% { box-shadow: 0 0  0px 0px rgba(99,255,180,0);    }
     50%       { box-shadow: 0 0 20px 2px rgba(99,255,180,0.15); }
   }
   @keyframes spin {

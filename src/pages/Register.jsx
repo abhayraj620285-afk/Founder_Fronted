@@ -1,8 +1,18 @@
 import { useState } from "react";
+import Logo from "../components/Logo";
 import { useNavigate, Link } from "react-router-dom";
 import { registerApi } from "../api/api";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+
+const ROLE_CFG = {
+  FOUNDER: { color:"#63ffb4", bg:"rgba(99,255,180,0.10)", border:"rgba(99,255,180,0.25)", icon:"🚀", label:"Founder",
+    access:["Create Startup","Live Dashboard","ML Insights","Benchmark"],
+    subtitle:"I want to create and track my startup with real AI analytics" },
+  USER: { color:"#60a5fa", bg:"rgba(96,165,250,0.10)", border:"rgba(96,165,250,0.25)", icon:"🌐", label:"User",
+    access:["Explore Page","Demo Dashboard","Upgrade anytime"],
+    subtitle:"I want to explore the platform before committing" },
+};
 
 export default function Register() {
   const [step,         setStep]         = useState(1);
@@ -13,15 +23,10 @@ export default function Register() {
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState("");
 
-  const { setRoleAndPersist } = useAuth();
+  const { saveRegistrationRole } = useAuth();
   const toast    = useToast();
   const navigate = useNavigate();
-
-  const roleConfig = {
-    FOUNDER: { color:"#63ffb4", bg:"rgba(99,255,180,0.10)", border:"rgba(99,255,180,0.25)", icon:"🚀", label:"Founder", desc:"Create and manage your startup analytics" },
-    USER:    { color:"#60a5fa", bg:"rgba(96,165,250,0.10)", border:"rgba(96,165,250,0.25)", icon:"🌐", label:"User",    desc:"Explore the platform and view demo analytics" },
-  };
-  const meta = roleConfig[selectedRole];
+  const meta = ROLE_CFG[selectedRole];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,16 +36,17 @@ export default function Register() {
     if (password !== confirm) { setError("Passwords do not match.");          return; }
     if (password.length < 6)  { setError("Password must be 6+ characters."); return; }
 
-    // STEP 1: Save role FIRST — this is the single source of truth
-    setRoleAndPersist(selectedRole);
+    // Save role keyed by THIS email before the API call
+    // This is the permanent record — survives logout, switching accounts, etc.
+    saveRegistrationRole(email.trim().toLowerCase(), selectedRole);
 
     setLoading(true);
     try {
-      await registerApi(email, password, selectedRole);
+      await registerApi(email.trim(), password, selectedRole);
       toast.success(`${meta.label} account created! Please sign in.`);
       navigate("/login");
     } catch (err) {
-      setError(err.message || "Registration failed.");
+      setError(err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -52,16 +58,14 @@ export default function Register() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[#63ffb4]/4 blur-[100px] pointer-events-none" />
 
       <div className="relative w-full max-w-md space-y-6 animate-fadeIn">
-        <div className="text-center">
-          <h1 className="text-3xl font-black tracking-tight text-white">
-            Founder<span className="text-[#63ffb4]">Brain</span>
-          </h1>
-          <p className="text-sm text-white/40 mt-1">Create your account</p>
+        <div className="flex flex-col items-center gap-3">
+          <Logo size="lg" />
+          <p className="text-sm text-white/40">Create your account</p>
         </div>
 
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-3">
-          {["Choose Role", "Create Account"].map((label, i) => {
+          {["Choose Role","Create Account"].map((label, i) => {
             const isActive = i + 1 === step;
             const isDone   = i + 1 < step;
             return (
@@ -69,42 +73,38 @@ export default function Register() {
                 <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-black transition-all ${isDone?"bg-[#63ffb4] border-[#63ffb4] text-[#080c10]":isActive?"border-[#63ffb4] text-[#63ffb4]":"border-white/20 text-white/30"}`}>
                   {isDone ? "✓" : i + 1}
                 </div>
-                <span className={`text-xs font-semibold ${isActive ? "text-white" : "text-white/30"}`}>{label}</span>
+                <span className={`text-xs font-semibold ${isActive?"text-white":"text-white/30"}`}>{label}</span>
                 {i === 0 && <span className="text-white/15 mx-1">→</span>}
               </div>
             );
           })}
         </div>
 
-        {/* ── STEP 1: Pick role ── */}
+        {/* ── STEP 1: Role picker ── */}
         {step === 1 && (
           <div className="space-y-4">
-            <p className="text-center text-sm text-white/40">What is your role?</p>
+            <p className="text-center text-sm text-white/40">What best describes you?</p>
 
-            {[
-              { role:"FOUNDER", icon:"🚀", title:"Founder", subtitle:"I want to create and track my startup", access:["Create Startup","Dashboard","ML Insights","Benchmark"] },
-              { role:"USER",    icon:"🌐", title:"User",    subtitle:"I want to explore the platform first",  access:["Explore Page","Demo Dashboard","Upgrade anytime"] },
-            ].map(({ role, icon, title, subtitle, access }) => {
-              const cfg = roleConfig[role];
+            {Object.entries(ROLE_CFG).map(([role, cfg]) => {
               const isSel = selectedRole === role;
               return (
                 <button key={role} type="button" onClick={() => setSelectedRole(role)}
-                  className="w-full text-left rounded-2xl border p-5 transition-all"
+                  className="w-full text-left rounded-2xl border p-5 transition-all duration-150"
                   style={{ background:isSel?cfg.bg:"rgba(255,255,255,0.02)", borderColor:isSel?cfg.color:"rgba(255,255,255,0.08)" }}>
                   <div className="flex items-start gap-4">
-                    <div className="mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0"
+                    <div className="mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
                       style={{ borderColor:isSel?cfg.color:"rgba(255,255,255,0.25)" }}>
                       {isSel && <div className="w-2.5 h-2.5 rounded-full" style={{ background:cfg.color }}/>}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span>{icon}</span>
-                        <span className="text-sm font-black text-white">{title}</span>
+                        <span className="text-base">{cfg.icon}</span>
+                        <span className="text-sm font-black text-white">{cfg.label}</span>
                         {isSel && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border" style={{ color:cfg.color, borderColor:`${cfg.color}40`, background:`${cfg.color}15` }}>Selected</span>}
                       </div>
-                      <p className="text-xs text-white/40 mb-2">{subtitle}</p>
+                      <p className="text-xs text-white/40 mb-2">{cfg.subtitle}</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {access.map((a) => (
+                        {cfg.access.map((a) => (
                           <span key={a} className="text-[10px] px-2 py-0.5 rounded-full border font-medium"
                             style={isSel?{color:cfg.color,borderColor:`${cfg.color}30`,background:`${cfg.color}10`}:{color:"rgba(255,255,255,0.3)",borderColor:"rgba(255,255,255,0.08)"}}>
                             {a}
@@ -122,6 +122,7 @@ export default function Register() {
               style={{ background:meta.color, color:"#080c10" }}>
               Continue as {meta.label} →
             </button>
+
             <p className="text-center text-xs text-white/30">
               Already have an account?{" "}
               <Link to="/login" className="text-[#63ffb4] font-semibold hover:text-white transition-colors">Sign in</Link>
@@ -164,13 +165,12 @@ export default function Register() {
                   </div>
                 ))}
 
-                {/* After registration info */}
                 <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] px-4 py-3 flex items-center gap-3">
                   <span>{meta.icon}</span>
                   <div>
                     <div className="text-[10px] text-white/25 uppercase tracking-widest font-semibold">After login you'll go to</div>
                     <div className="text-xs font-bold" style={{ color:meta.color }}>
-                      {selectedRole === "FOUNDER" ? "→ Create Startup page" : "→ Explore Page & Demo Dashboard"}
+                      {selectedRole === "FOUNDER" ? "→ Create Startup (first time) or Dashboard" : "→ Explore Page & Demo Dashboard"}
                     </div>
                   </div>
                 </div>

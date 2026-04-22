@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import Logo from "./Logo";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useRole } from "../hooks/useRole";
@@ -219,10 +220,8 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-5 h-14 flex items-center gap-3">
 
         {/* Logo */}
-        <Link to="/dashboard" className="flex items-center gap-2 shrink-0 mr-2 group">
-          <span className="font-black text-lg tracking-tight text-white group-hover:text-[#63ffb4] transition-colors">
-            Founder<span className="text-[#63ffb4]">Brain</span>
-          </span>
+        <Link to="/dashboard" className="shrink-0 mr-2 hover:opacity-85 transition-opacity">
+          <Logo size="sm" />
         </Link>
 
         {/* Startup switcher — shown on dashboard and benchmark */}

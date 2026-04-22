@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { fetchBenchmarkApi } from "../api/api";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   RadarChart, PolarGrid, PolarAngleAxis, Radar,
   ResponsiveContainer, Tooltip, BarChart, Bar,
@@ -11,7 +9,6 @@ import {
   PieChart, Pie,
 } from "recharts";
 
-gsap.registerPlugin(ScrollTrigger);
 
 // ── SVG Icons ─────────────────────────────────────────────────────────────────
 const Ic = {
@@ -104,16 +101,8 @@ function CompareBar({ label, yours, industry, unit, animate }) {
   const color  = better ? "#63ffb4" : "#f87171";
   const max    = Math.max(yours??0, industry??0, 1);
 
-  const barRef = useRef(null);
-  useEffect(() => {
-    if (!barRef.current || !animate) return;
-    gsap.from(barRef.current.querySelectorAll(".bar-fill"), {
-      width:0, duration:1.2, ease:"power3.out", stagger:0.15,
-    });
-  }, [animate]);
-
   return (
-    <div ref={barRef} className="space-y-3">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-sm font-bold text-white/75">{label}</span>
         <div className="flex items-center gap-2">
@@ -204,27 +193,10 @@ export default function Benchmark() {
   useEffect(() => { load(activeStartupId); }, [activeStartupId]);
 
   // GSAP hero entrance
-  useEffect(() => {
-    if (!heroRef.current) return;
-    const ctx = gsap.context(() => {
-      gsap.from(".bm-title", { y:40, opacity:0, duration:0.8, ease:"power3.out" });
-      gsap.from(".bm-sub",   { y:30, opacity:0, duration:0.8, delay:0.15, ease:"power3.out" });
-      gsap.from(".bm-badge", { y:20, opacity:0, duration:0.6, delay:0.05, ease:"power3.out" });
-    }, heroRef);
-    return () => ctx.revert();
-  }, []);
+  
 
   // GSAP cards stagger when data loads
-  useEffect(() => {
-    if (!data || !pageRef.current) return;
-    const ctx = gsap.context(() => {
-      gsap.from(".bm-card", {
-        y:35, opacity:0, duration:0.65, stagger:0.1, ease:"power3.out", delay:0.1,
-        scrollTrigger:{ trigger:".bm-card", start:"top 92%" },
-      });
-    }, pageRef);
-    return () => ctx.revert();
-  }, [data]);
+
 
   // Derived
   const yourGrowth  = data?.yourGrowth         ?? 0;
@@ -319,7 +291,7 @@ export default function Benchmark() {
             {/* ── Summary row ── */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Performance score */}
-              <div className="bm-card rounded-2xl border border-white/[0.07] bg-[#0d1117]/90 p-6 flex flex-col items-center justify-center">
+              <div className="bm-card rounded-2xl animate-fadeIn border border-white/[0.07] bg-[#0d1117]/90 p-6 flex flex-col items-center justify-center">
                 <PerformanceRing
                   score={perfScore}
                   label={perfScore>=70?"Strong Performer":perfScore>=45?"On Track":"Needs Focus"}
@@ -328,7 +300,7 @@ export default function Benchmark() {
               </div>
 
               {/* Quick deltas */}
-              <div className="bm-card sm:col-span-2 rounded-2xl border border-white/[0.07] bg-[#0d1117]/90 p-6">
+              <div className="bm-card sm:col-span-2 rounded-2xl animate-fadeIn border border-white/[0.07] bg-[#0d1117]/90 p-6">
                 <SL>Performance Summary</SL>
                 <div className="grid grid-cols-2 gap-4">
                   {[
@@ -391,14 +363,14 @@ export default function Benchmark() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                  <div className="bm-card rounded-2xl border border-white/[0.07] bg-[#0d1117]/90 p-6 space-y-6">
+                  <div className="bm-card rounded-2xl animate-fadeIn border border-white/[0.07] bg-[#0d1117]/90 p-6 space-y-6">
                     <CompareBar label="Growth Rate" yours={yourGrowth} industry={indGrowth} unit="%" animate={barsReady}/>
                     <div className="h-px bg-white/[0.05]"/>
                     <CompareBar label="Cash Runway" yours={yourRunway} industry={indRunway} unit=" mo" animate={barsReady}/>
                   </div>
 
                   {/* Bar chart */}
-                  <div className="bm-card rounded-2xl border border-white/[0.07] bg-[#0d1117]/90 p-6">
+                  <div className="bm-card rounded-2xl animate-fadeIn border border-white/[0.07] bg-[#0d1117]/90 p-6">
                     <SL>Side-by-side Comparison</SL>
                     <ResponsiveContainer width="100%" height={260}>
                       <BarChart data={[
@@ -422,7 +394,7 @@ export default function Benchmark() {
             {tab === "radar" && (
               <div className="space-y-5 animate-fadeIn">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                  <div className="bm-card rounded-2xl border border-white/[0.07] bg-[#0d1117]/90 p-6">
+                  <div className="bm-card rounded-2xl animate-fadeIn border border-white/[0.07] bg-[#0d1117]/90 p-6">
                     <SL>Multi-dimensional Radar</SL>
                     <ResponsiveContainer width="100%" height={320}>
                       <RadarChart data={radarData}>
@@ -444,7 +416,7 @@ export default function Benchmark() {
                   </div>
 
                   {/* Dimension breakdown */}
-                  <div className="bm-card rounded-2xl border border-white/[0.07] bg-[#0d1117]/90 p-6">
+                  <div className="bm-card rounded-2xl animate-fadeIn border border-white/[0.07] bg-[#0d1117]/90 p-6">
                     <SL>Dimension Scores</SL>
                     <div className="space-y-4">
                       {radarData.map(({ metric, You, Industry }) => {
@@ -494,7 +466,7 @@ export default function Benchmark() {
             {/* ══ LEADERBOARD ══ */}
             {tab === "leaderboard" && (
               <div className="space-y-5 animate-fadeIn">
-                <div className="bm-card rounded-2xl border border-white/[0.07] bg-[#0d1117]/90 overflow-hidden">
+                <div className="bm-card rounded-2xl animate-fadeIn border border-white/[0.07] bg-[#0d1117]/90 overflow-hidden">
                   <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
                     <SL className="mb-0">Growth Rate Leaderboard</SL>
                     <div className="flex items-center gap-2 text-xs text-white/25">
@@ -575,7 +547,7 @@ export default function Benchmark() {
                 </div>
 
                 {/* Action items */}
-                <div className="bm-card rounded-2xl border border-white/[0.07] bg-[#0d1117]/90 p-6">
+                <div className="bm-card rounded-2xl animate-fadeIn border border-white/[0.07] bg-[#0d1117]/90 p-6">
                   <SL>Recommended Actions Based on Benchmark</SL>
                   <div className="space-y-3">
                     {[
