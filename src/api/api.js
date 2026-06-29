@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://founderbrain.onrender.com";
+const BASE_URL = "http://a6ee3cb9a21f840759cc7c33484a3afc-265054964.us-east-1.elb.amazonaws.com:8080";
 
 const api = axios.create({
   baseURL: BASE_URL,
