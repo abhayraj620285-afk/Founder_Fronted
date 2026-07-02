@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = "http://a49d0754ffc5b4f84a78eb120002aaf4-1312042671.us-east-1.elb.amazonaws.com:8080";
+const BASE_URL = "http://a379e2cfc13b84cc5ae5a894a07aafd6-95232185.us-east-1.elb.amazonaws.com:8080";
+
 
 const api = axios.create({
   baseURL: BASE_URL,
